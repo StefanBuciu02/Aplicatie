@@ -4,62 +4,51 @@ import java.io.*;
 import java.net.*;
 
 public class Client {
-	// initialize socket and input output streams
-	private Socket socket = null;
-	private DataInputStream input = null;
-	private DataOutputStream out = null;
+    private Socket socket = null;
+    private DataInputStream input = null;
+    private DataOutputStream out = null;
 
-	// constructor to put ip address and port
-	public Client(String address, int port)
-	{
-		// establish a connection
-		try {
-			socket = new Socket(address, port);
-			System.out.println("Connected");
+    public Client(String address, int port) {
+        try {
+            socket = new Socket(address, port);
+            System.out.println("Connected");
 
-			// takes input from terminal
-			input = new DataInputStream(System.in);
+            input = new DataInputStream(socket.getInputStream());
+            out = new DataOutputStream(socket.getOutputStream());
 
-			// sends output to the socket
-			out = new DataOutputStream(
-					socket.getOutputStream());
-		}
-		catch (UnknownHostException u) {
-			System.out.println(u);
-			return;
-		}
-		catch (IOException i) {
-			System.out.println(i);
-			return;
-		}
+            String domainOptions = input.readUTF();
+            System.out.println("Alege un domeniu:\n" + domainOptions);
+            System.out.print("Alegerea ta: ");
+            String domainChoice = new BufferedReader(new InputStreamReader(System.in)).readLine();
+            out.writeUTF(domainChoice);
 
-		// string to read message from input
-		String line = "";
+            System.out.print("Câte dintre ultimele știri dorești să vezi? Scrie un număr sau 'all' pentru toate: ");
+            String nrOfNewsChoice = new BufferedReader(new InputStreamReader(System.in)).readLine();
+            out.writeUTF(nrOfNewsChoice);
 
-		// keep reading until "Over" is input
-		while (!line.equals("Over")) {
-			try {
-				line = input.readLine();
-				out.writeUTF(line);
-			}
-			catch (IOException i) {
-				System.out.println(i);
-			}
-		}
+            String line = "";
+            while (!line.equals("Over")) {
+                line = input.readUTF();
+                if (!line.isEmpty()) {
+                    System.out.println(line);
+                }
+            }
+        } catch (UnknownHostException u) {
+            System.out.println(u);
+        } catch (IOException i) {
+            System.out.println(i);
+        } finally {
+            try {
+                input.close();
+                out.close();
+                socket.close();
+            } catch (IOException i) {
+                System.out.println(i);
+            }
+        }
+    }
 
-		// close the connection
-		try {
-			input.close();
-			out.close();
-			socket.close();
-		}
-		catch (IOException i) {
-			System.out.println(i);
-		}
-	}
-
-	public static void main(String args[])
-	{
-		Client client = new Client("127.0.0.1", 5000);
-	}
+    public static void main(String args[]) {
+        Client client = new Client("127.0.0.1", 8001);
+    }
 }
